@@ -7,8 +7,12 @@ from model import *
 def main():
     prepare_data()
 
-    net = EncoderNet()
+    # net = EncoderNet()
+    #
+    # vgg16 = models.vgg16(pretrained=True)
+    # net.copy_params_from_vgg16(vgg16)
 
-    vgg16 = models.vgg16(pretrained=True)
-    net.copy_params_from_vgg16(vgg16)
+
+if __name__ == '__main__':
+    main()
 
