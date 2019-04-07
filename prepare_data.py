@@ -5,7 +5,7 @@ from collections import Counter
 from pycocotools.coco import COCO
 from PIL import Image
 from resizeimage import resizeimage
-
+from tqdm import tqdm
 
 CAPTION_PATH = 'data/annotations/captions_train2014.json'
 VOCAB_PATH = './data/vocab.pkl'
@@ -68,7 +68,7 @@ def resize_image():
     images = os.listdir(IMAGE_DIR)
     # num_images = len(images)
 
-    for i, image in enumerate(images):
+    for i, image in enumerate(tqdm(images)):
         with open(os.path.join(IMAGE_DIR, image), 'r+b') as f:
             with Image.open(f) as img:
                 # img = resize_image(img, IMAGE_SIZE)

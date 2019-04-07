@@ -65,7 +65,7 @@ class EncoderNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.Dropout2d(),
 
-            # fc7 1 * 1 conv => N * 4096 * 8 * 8
+            # fc7 1 * 1 conv => N * 4096
             nn.Conv2d(4096, 4096),
             nn.ReLU(inplace=True),
             nn.Dropout2d()
@@ -128,6 +128,8 @@ class EncoderNet(nn.Module):
         # layer 5
         h = self.encoder_fc_5(h)
 
+        h=h.view(h.size[0],-1)
+
         # encode finish
         h = self.encoder_fc_6_7(h)
 
@@ -161,5 +163,7 @@ class DecoderNet(nn.Module):
     def __init__(self):
         super(DecoderNet, self).__init__()
 
-        # TODO: wait for master chao
+        # TODO: wait for master zou
+
+
 
