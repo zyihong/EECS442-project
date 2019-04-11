@@ -5,6 +5,7 @@ from dataloader import get_loader
 from model import *
 import pickle
 import numpy as np
+from tqdm import tqdm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -18,17 +19,18 @@ def main():
     data_loader = get_loader(vocab=vocab, batch_size=5, shuffle=True)
 
     #Encoder
-    encoder = EncoderNet(50)
+    encoder = EncoderNet(50).to(device)
     vgg16 = models.vgg16(pretrained=True)
+    vgg16.cuda()
     encoder.copy_params_from_vgg16(vgg16)
 
-    decoder = DecoderNet(embed_size=50, hidden_size=100, vocab_size=data_loader.__len__())
+    decoder = DecoderNet(embed_size=50, hidden_size=100, vocab_size=data_loader.__len__()).to(device)
 
     criterion = nn.CrossEntropyLoss()
     params = list(decoder.parameters())+list(encoder.fc.parameters())
     optimizer = torch.optim.Adam(params, lr=1e-3)
     for epoch in range(10):
-        for i, (images, captions, lengths) in enumerate(data_loader):
+        for i, (images, captions, lengths) in enumerate(tqdm(data_loader)):
             images = images.to(device)
             captions = captions.to(device)
 
@@ -41,8 +43,8 @@ def main():
             decoder.zero_grad()
             loss.backward()
             optimizer.step()
-        if i % 10 == 0:
-            print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch, 10, i, 10, loss.item(), np.exp(loss.item())))
+            if i % 10 == 0:
+                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch, 10, i, 10, loss.item(), np.exp(loss.item())))
         # targets=pack_padded_sequence(captions,lengths=lengths,batch_first=True)[0]
 
 
