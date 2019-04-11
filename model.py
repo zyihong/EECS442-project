@@ -16,11 +16,11 @@ class EncoderNet(nn.Module):
             #########################################
 
             # fc1 1/2 = 256/2 = 128 => N * 64 * 128 * 128
-            nn.Conv2d(3, 64, kernel_size=3, padding=1),
+            nn.Conv2d(3, 64, kernel_size=3, padding=41),
             nn.ReLU(inplace=True),
             nn.Conv2d(64, 64, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.MaxPool2d(kernel_size=3, stride=3),
 
             # fc2 1/4 = 128/2 = 64 => N * 128 * 64 * 64
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
@@ -63,7 +63,7 @@ class EncoderNet(nn.Module):
 
         self.encoder_fc_6_7 = nn.Sequential(
             # fc6 N * 4096
-            nn.Linear(512 * 8 * 8, 4096),
+            nn.Linear(25088, 4096),
             nn.ReLU(inplace=True),
             nn.Dropout2d(),
 
@@ -114,16 +114,21 @@ class EncoderNet(nn.Module):
         for idx in [0, 3]:
             l1 = vgg16.classifier[idx]
             l2 = getattr(self, 'encoder_fc_6_7')[idx]
-            l2.weight.data = l1.weight.data  #.view(l2.weight.size())
-            l2.bias.data = l1.bias.data  #.view(l2.bias.size())
+            l2.weight.data = l1.weight.data.view(l2.weight.size())
+            l2.bias.data = l1.bias.data.view(l2.bias.size())
 
     def forward(self, x):
         # x = self.layers(x)
+
+        x = x.permute(0, 3, 1, 2)
+        print(x.shape)
 
         # layer3
         h = x
         h = self.encoder_fc_1_3(h)
         # pool3 = h
+
+        print('hh', h.shape)
 
         # layer4
         h = self.encoder_fc_4(h)
@@ -132,7 +137,10 @@ class EncoderNet(nn.Module):
         # layer 5
         h = self.encoder_fc_5(h)
 
-        h=h.view(h.size[0],-1)
+        print('h', h.shape)
+
+        h = h.view((h.shape[0], -1))
+        print(h.shape)
 
         # encode finish
         h = self.encoder_fc_6_7(h)
