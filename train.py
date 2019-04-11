@@ -34,10 +34,12 @@ def main():
 
             features = encoder(images)
             outputs = decoder(features, captions, lengths)
+            # print('output', outputs.shape)
+            # print('caption', captions.shape)
             loss = criterion(outputs, captions)
             encoder.zero_grad()
             decoder.zero_grad()
-            loss.backwards()
+            loss.backward()
             optimizer.step()
         if i % 10 == 0:
             print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch, 10, i, 10, loss.item(), np.exp(loss.item())))

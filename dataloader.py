@@ -34,7 +34,7 @@ class Cocodataset(data.Dataset):
             caption.append(self.vocab(token))
         caption.append(self.vocab("<end>"))
 
-        return image, torch.Tensor(caption)
+        return image, torch.LongTensor(caption)
 
     def __len__(self):
         return len(self.ids)
