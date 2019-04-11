@@ -89,7 +89,7 @@ class EncoderNet(nn.Module):
         # # fc11
         # self.fc11 = nn.ConvTranspose2d(self.n_class, self.n_class, kernel_size=16, stride=8, bias=False)
 
-        self._initialize_weights()
+        # self._initialize_weights()
 
     # def _initialize_weights(self):
     #     for m in self.modules():
