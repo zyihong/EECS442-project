@@ -82,9 +82,10 @@ def prepare_data():
     # vocab = build_vocab(CAPTION_PATH, THRESHOLD)
     # with open(VOCAB_PATH, 'wb') as f:
     #     pickle.dump(vocab, f)
-    # print('Save word vocab to {}'.format(VOCAB_PATH))
+    print('Save word vocab to {}'.format(VOCAB_PATH))
 
 
-    resize_image()
+    # resize_image()
+
 
 
