@@ -4,6 +4,7 @@ import torch
 from dataloader import get_loader
 from model import *
 import pickle
+import numpy as np
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -13,18 +14,33 @@ def main():
     f=open('./data/vocab.pkl','rb')
     vocab=pickle.load(f)
     f.close()
-    data_loader = get_loader(vocab=vocab,batch_size=5)
+    data_loader = get_loader(vocab=vocab,batch_size=5,shuffle=True)
 
     #Encoder
-    # net = EncoderNet()
-    # vgg16 = models.vgg16(pretrained=True)
-    # net.copy_params_from_vgg16(vgg16)
+    encoder = EncoderNet(50)
+    vgg16 = models.vgg16(pretrained=True)
+    encoder.copy_params_from_vgg16(vgg16)
 
-    for i, (images,captions,lengths) in enumerate(data_loader):
-        images=images.to(device)
-        captions=captions.to(device)
-        
+    decoder=DecoderNet(embed_size=50,hidden_size=100,vocab_size=data_loader.__len__())
 
+    criterion = nn.CrossEntropyLoss()
+    params=list(decoder.parameters())+list(encoder.linear.parameters())
+    optimizer=torch.optim.Adam(params,lr=1e-3)
+    for epoch in range(10):
+        for i, (images,captions,lengths) in enumerate(data_loader):
+            images=images.to(device)
+            captions=captions.to(device)
+
+            features=encoder(images)
+            outputs=decoder(features,captions,lengths)
+            loss=criterion(outputs,captions)
+            encoder.zero_grad()
+            decoder.zero_grad()
+            loss.backwards()
+            optimizer.step()
+        if i%10==0:
+            print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'
+              .format(epoch, 10, i,10 , loss.item(), np.exp(loss.item())))
         # targets=pack_padded_sequence(captions,lengths=lengths,batch_first=True)[0]
 
     #Decoder
