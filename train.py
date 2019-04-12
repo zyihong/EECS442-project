@@ -47,7 +47,7 @@ def main():
     f = open('./data/vocab.pkl', 'rb')
     vocab = pickle.load(f)
     f.close()
-    data_loader = get_loader(vocab=vocab, batch_size=5, shuffle=True)
+    data_loader = get_loader(vocab=vocab, batch_size=10, shuffle=True)
 
     #Encoder
     encoder = EncoderNet(50).to(device)
@@ -59,17 +59,17 @@ def main():
 
     criterion = nn.CrossEntropyLoss()
     params = list(decoder.parameters())+list(encoder.fc.parameters())
-    optimizer = torch.optim.Adam(params, lr=1e-4)
+    optimizer = torch.optim.Adam(params, lr=1e-3)
     for epoch in range(10):
         for i, (images, captions, lengths) in enumerate(tqdm(data_loader)):
             images = images.to(device)
             captions = captions.to(device)
-
+            targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
             features = encoder(images)
             outputs = decoder(features, captions, lengths)
             # print('output', outputs.shape)
             # print('caption', captions.shape)
-            loss = criterion(outputs, captions)
+            loss = criterion(outputs, targets)
             encoder.zero_grad()
             decoder.zero_grad()
             loss.backward()

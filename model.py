@@ -187,11 +187,11 @@ class DecoderNet(nn.Module):
         # print('embed1', embeddings.shape)
         embeddings = torch.cat((features.unsqueeze(1), embeddings), 1)
         # print('embed2', embeddings.shape)
-        # packed = pack_padded_sequence(embeddings, lengths, batch_first=True)
-        hiddens, _ = self.lstm(embeddings)  # packed)
+        packed = pack_padded_sequence(embeddings, lengths, batch_first=True)
+        hiddens, _ = self.lstm(packed)  # packed)
         # print(hiddens.shape)
-        outputs = self.linear(hiddens[:, :-1, :])
-        outputs = outputs.permute(0, 2, 1)
+        outputs = self.linear(hiddens[0])
+        # outputs = outputs.permute(0, 2, 1)
         return outputs
 
     def predict(self, features, states=None):
