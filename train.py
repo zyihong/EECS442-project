@@ -17,6 +17,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 SAVE_STEP = 500
 MODEL_DIR = 'models/'
+EMBED_SIZE = 256
 
 
 def sample(encoder,decoder,vocab):
@@ -50,12 +51,12 @@ def main():
     data_loader = get_loader(vocab=vocab, batch_size=10, shuffle=True)
 
     #Encoder
-    encoder = EncoderNet(50).to(device)
+    encoder = EncoderNet(EMBED_SIZE).to(device)
     vgg16 = models.vgg16(pretrained=True)
     vgg16.cuda()
     encoder.copy_params_from_vgg16(vgg16)
 
-    decoder = DecoderNet(embed_size=50, hidden_size=100, vocab_size=len(vocab.word_to_idx)).to(device)
+    decoder = DecoderNet(embed_size=EMBED_SIZE, hidden_size=100, vocab_size=len(vocab.word_to_idx)).to(device)
 
     criterion = nn.CrossEntropyLoss()
     params = list(decoder.parameters())+list(encoder.fc.parameters())
