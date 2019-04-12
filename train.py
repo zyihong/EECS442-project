@@ -6,8 +6,33 @@ from model import *
 import pickle
 import numpy as np
 from tqdm import tqdm
-
+import matplotlib
+matplotlib.use('tkagg')
+import cv2
+import matplotlib.pyplot as plt
+from PIL import Image
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+def sample(encoder,decoder,vocab):
+    image = Image.open('./data/resizedTrain2014/COCO_train2014_000000000034.jpg')
+    image_tensor = torch.Tensor(np.asarray(image)).view((1, 256, 256, 3)).to(device)
+    # Generate an caption from the image
+    feature = encoder(image_tensor)
+    sampled_ids = decoder.predict(feature)
+    sampled_ids = sampled_ids[0].cpu().numpy()  # (1, max_seq_length) -> (max_seq_length)
+    # Convert word_ids to words
+    sampled_caption = []
+    for word_id in sampled_ids:
+        word = vocab.idx_to_word[word_id]
+        sampled_caption.append(word)
+        if word == '<end>':
+            break
+    sentence = ' '.join(sampled_caption)
+    # Print out the image and the generated caption
+    print(sentence)
+    # image = Image.open(args.image)
+    # plt.imshow(np.asarray(image))
+    # plt.show()
 
 
 def main():
@@ -28,7 +53,7 @@ def main():
 
     criterion = nn.CrossEntropyLoss()
     params = list(decoder.parameters())+list(encoder.fc.parameters())
-    optimizer = torch.optim.Adam(params, lr=1e-3)
+    optimizer = torch.optim.Adam(params, lr=1e-4)
     for epoch in range(10):
         for i, (images, captions, lengths) in enumerate(tqdm(data_loader)):
             images = images.to(device)
@@ -43,9 +68,13 @@ def main():
             decoder.zero_grad()
             loss.backward()
             optimizer.step()
-            if i % 10 == 0:
+            if i % 50 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch, 10, i, 10, loss.item(), np.exp(loss.item())))
+            if i%100==0 and i!=0:
+                sample(encoder, decoder, vocab)
+
         # targets=pack_padded_sequence(captions,lengths=lengths,batch_first=True)[0]
+
 
 
 if __name__ == '__main__':
