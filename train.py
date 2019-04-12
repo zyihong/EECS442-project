@@ -18,8 +18,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 SAVE_STEP = 500
 MODEL_DIR = 'models/'
 EMBED_SIZE = 256
-ENCODER_PATH = './models/'
-DECODER_PATH = './models/'
+ENCODER_PATH = './models/encoder-1-33500.ckpt'
+DECODER_PATH = './models/decoder-1-33500.ckpt'
 LOAD_FROM_CHECKPOINT = True
 
 
