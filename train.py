@@ -1,17 +1,23 @@
 from torchvision import datasets, models, transforms
 from prepare_data import prepare_data
 import torch
+import os
 from dataloader import get_loader
 from model import *
 import pickle
 import numpy as np
 from tqdm import tqdm
 import matplotlib
-matplotlib.use('tkagg')
+# matplotlib.use('tkagg')
 import cv2
 import matplotlib.pyplot as plt
 from PIL import Image
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+SAVE_STEP = 500
+MODEL_DIR = 'models/'
+
 
 def sample(encoder,decoder,vocab):
     image = Image.open('./data/resizedTrain2014/COCO_train2014_000000000034.jpg')
@@ -70,13 +76,20 @@ def main():
             optimizer.step()
             if i % 50 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch, 10, i, 10, loss.item(), np.exp(loss.item())))
-            if i%100==0 and i!=0:
+            if i % 100 == 0 and i != 0:
                 sample(encoder, decoder, vocab)
+
+            if (i + 1) % SAVE_STEP == 0:
+                torch.save(decoder.state_dict(), os.path.join(
+                    MODEL_DIR, 'decoder-{}-{}.ckpt'.format(epoch + 1, i + 1)))
+                torch.save(encoder.state_dict(), os.path.join(
+                    MODEL_DIR, 'encoder-{}-{}.ckpt'.format(epoch + 1, i + 1)))
 
         # targets=pack_padded_sequence(captions,lengths=lengths,batch_first=True)[0]
 
 
-
 if __name__ == '__main__':
+    if not os.path.exists(MODEL_DIR):
+        os.makedirs(MODEL_DIR)
     main()
 
