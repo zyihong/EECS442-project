@@ -56,7 +56,7 @@ def main():
     vgg16.cuda()
     encoder.copy_params_from_vgg16(vgg16)
 
-    decoder = DecoderNet(embed_size=EMBED_SIZE, hidden_size=100, vocab_size=len(vocab.word_to_idx)).to(device)
+    decoder = DecoderNet(embed_size=EMBED_SIZE, hidden_size=128, vocab_size=len(vocab.word_to_idx)).to(device)
 
     criterion = nn.CrossEntropyLoss()
     params = list(decoder.parameters())+list(encoder.fc.parameters())

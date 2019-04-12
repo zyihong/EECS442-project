@@ -13,7 +13,7 @@ class Cocodataset(data.Dataset):
     def __init__(self, json, vocab):
 
         self.coco = COCO(json)
-        self.ids = list(self.coco.anns.keys())[0:8000]
+        self.ids = list(self.coco.anns.keys())
         self.vocab = vocab
         self.root = "./data/resizedTrain2014"
 
