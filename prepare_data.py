@@ -12,8 +12,8 @@ VOCAB_PATH = './data/vocab.pkl'
 THRESHOLD = 4
 
 IMAGE_DIR = './data/train2014'
-RESIZE_IMAGE_DIR = './data/resizedTrain2014'
-IMAGE_SIZE = [256, 256]
+RESIZE_IMAGE_DIR = './data/newresized'
+IMAGE_SIZE = [224, 224]
 
 
 class Vocabulary(object):
@@ -85,7 +85,7 @@ def prepare_data():
     print('Save word vocab to {}'.format(VOCAB_PATH))
 
 
-    # resize_image()
+# resize_image()
 
 
 

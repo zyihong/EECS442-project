@@ -12,37 +12,51 @@ import matplotlib
 import cv2
 import matplotlib.pyplot as plt
 from PIL import Image
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cpu')
 
 
-SAVE_STEP = 500
+SAVE_STEP = 2000
 MODEL_DIR = 'models/'
 EMBED_SIZE = 256
-ENCODER_PATH = './models/encoder-1-33500.ckpt'
-DECODER_PATH = './models/decoder-1-33500.ckpt'
-LOAD_FROM_CHECKPOINT = True
+ENCODER_PATH = './models/encoder-4-82000.ckpt'
+DECODER_PATH = './models/decoder-4-82000.ckpt'
+LOAD_FROM_CHECKPOINT = False
+LEARNING_RATE = 5e-4
+
+def sentence(vocab,sampled_ids):
+    captions=[]
+    for word_id in sampled_ids:
+        word = vocab.idx_to_word[word_id]
+        captions.append(word)
+        # if word == '<end>':
+        #     break
+    print(captions)
 
 
 def sample(encoder, decoder, vocab):
-    image = Image.open('./data/resizedTrain2014/COCO_train2014_000000000034.jpg')
-    image_tensor = torch.Tensor(np.asarray(image)).view((1, 256, 256, 3)).to(device)
-    # Generate an caption from the image
-    feature = encoder(image_tensor)
-    sampled_ids = decoder.predict(feature)
-    sampled_ids = sampled_ids[0].cpu().numpy()  # (1, max_seq_length) -> (max_seq_length)
-    # Convert word_ids to words
-    sampled_caption = []
-    for word_id in sampled_ids:
-        word = vocab.idx_to_word[word_id]
-        sampled_caption.append(word)
-        if word == '<end>':
-            break
-    sentence = ' '.join(sampled_caption)
-    # Print out the image and the generated caption
-    print(sentence)
-    # image = Image.open(args.image)
-    # plt.imshow(np.asarray(image))
-    # plt.show()
+    imagelist=['./data/newresized/COCO_train2014_000000000659.jpg','./data/newresized/COCO_train2014_000000000034.jpg', './data/newresized/COCO_train2014_000000000801.jpg']
+    for hh in imagelist:
+        image = Image.open(hh)
+        image_tensor = torch.Tensor(np.asarray(image)).view((1, 224, 224, 3)).to(device)
+        # Generate an caption from the image
+        encoder.eval()
+        feature = encoder(image_tensor)
+        sampled_ids = decoder.predict(feature)
+        sampled_ids = sampled_ids[0].cpu().numpy()  # (1, max_seq_length) -> (max_seq_length)
+        # Convert word_ids to words
+        sampled_caption = []
+        for word_id in sampled_ids:
+            word = vocab.idx_to_word[word_id]
+            sampled_caption.append(word)
+            if word == '<end>':
+                break
+        sentence = ' '.join(sampled_caption)
+        # Print out the image and the generated caption
+        print(sentence)
+        # image = Image.open(args.image)
+        # plt.imshow(np.asarray(image))
+        # plt.show()
 
 
 def main():
@@ -51,7 +65,7 @@ def main():
     f = open('./data/vocab.pkl', 'rb')
     vocab = pickle.load(f)
     f.close()
-    data_loader = get_loader(vocab=vocab, batch_size=10, shuffle=True)
+    data_loader = get_loader(vocab=vocab, batch_size=5, shuffle=True)
 
     #Encoder
     encoder = EncoderNet(EMBED_SIZE).to(device)
@@ -67,12 +81,18 @@ def main():
 
     criterion = nn.CrossEntropyLoss()
     params = list(decoder.parameters())+list(encoder.fc.parameters())
-    optimizer = torch.optim.Adam(params, lr=1e-3)
-    for epoch in range(10):
+             # +list(encoder.bn.parameters())
+    optimizer = torch.optim.Adam(params, lr=LEARNING_RATE)
+    for epoch in range(1):
         for i, (images, captions, lengths) in enumerate(tqdm(data_loader)):
             images = images.to(device)
             captions = captions.to(device)
+            sentence(vocab,captions[0].cpu().numpy())
+            plt.imshow(images[0].data.cpu().numpy()[:,:,::-1].astype('uint8'))
+            plt.show()
+            plt.savefig('temp.jpg')
             targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
+            # sentence(vocab,targets.cpu().numpy())
             features = encoder(images)
             outputs = decoder(features, captions, lengths)
             # print('output', outputs.shape)

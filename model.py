@@ -16,11 +16,11 @@ class EncoderNet(nn.Module):
             #########################################
 
             # fc1 1/2 = 256/2 = 128 => N * 64 * 128 * 128
-            nn.Conv2d(3, 64, kernel_size=3, padding=41),
+            nn.Conv2d(3, 64, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
             nn.Conv2d(64, 64, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=3),
+            nn.MaxPool2d(kernel_size=2, stride=2),
 
             # fc2 1/4 = 128/2 = 64 => N * 128 * 64 * 64
             nn.Conv2d(64, 128, kernel_size=3, padding=1),
@@ -74,6 +74,7 @@ class EncoderNet(nn.Module):
         )
 
         self.fc = nn.Linear(4096, self.embed_size)
+        # self.bn=nn.BatchNorm1d(embed_size,momentum=0.01)
 
         # fc8 skip connection
         # self.score_fc7 = nn.Conv2d(4096, self.n_class, 1)
@@ -169,7 +170,7 @@ class EncoderNet(nn.Module):
         # h = self.fc11(h)
 
         # h = h[:, :, 28:28 + x.size()[2], 28:28 + x.size()[3]].contiguous()
-
+        # h=self.bn(h)
         return h
 
 

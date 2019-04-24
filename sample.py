@@ -9,15 +9,14 @@ import numpy as np
 import os
 from tqdm import tqdm
 import matplotlib
-# matplotlib.use('tkagg')
+matplotlib.use('tkagg')
 import cv2
 import matplotlib.pyplot as plt
-from PIL import Image
 SAVE_STEP = 500
 MODEL_DIR = 'models/'
 EMBED_SIZE = 256
-ENCODER_PATH = './models/encoder-1-33500.ckpt'
-DECODER_PATH = './models/decoder-1-33500.ckpt'
+ENCODER_PATH = './models/encoder-1-82000.ckpt'
+DECODER_PATH = './models/decoder-1-82000.ckpt'
 LOAD_FROM_CHECKPOINT = True
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -38,11 +37,11 @@ if LOAD_FROM_CHECKPOINT:
     decoder.load_state_dict(torch.load(DECODER_PATH))
 
 
-root='./data/resizedTrain2014/'
+root='./data/newresized/'
 files=os.listdir(root)
-for file in files:
-    image = Image.open(os.path.join(root,file))
-    image_tensor = torch.Tensor(np.asarray(image)).view((1, 256, 256, 3)).to(device)
+for i in range(200,1000):
+    image = cv2.cvtColor(cv2.imread(os.path.join(root,files[i])),cv2.COLOR_BGR2RGB)
+    image_tensor = torch.Tensor(image).view((1, 224, 224, 3)).to(device)
     # Generate an caption from the image
     feature = encoder(image_tensor)
     sampled_ids = decoder.predict(feature)
@@ -56,7 +55,9 @@ for file in files:
             break
     sentence = ' '.join(sampled_caption)
     # Print out the image and the generated caption
-    print(sentence)
     # image = Image.open(args.image)
-    # plt.imshow(np.asarray(image))
+    plt.imshow(image_tensor[0].data.cpu().numpy().astype('uint8'))
+    plt.title(sentence)
+    plt.savefig("./results/img{}.png".format(i))
     # plt.show()
+
