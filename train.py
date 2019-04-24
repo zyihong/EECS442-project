@@ -1,5 +1,4 @@
 from torchvision import datasets, models, transforms
-from prepare_data import prepare_data
 import torch
 import os
 from dataloader import get_loader
@@ -18,7 +17,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 SAVE_STEP = 2000
 MODEL_DIR = 'models/'
-EMBED_SIZE = 256
+EMBED_SIZE = 200
 ENCODER_PATH = './models/encoder-4-82000.ckpt'
 DECODER_PATH = './models/decoder-4-82000.ckpt'
 LOAD_FROM_CHECKPOINT = False
@@ -36,7 +35,7 @@ def sentence(vocab,sampled_ids):
 
 
 def sample(encoder, decoder, vocab):
-    imagelist=['./data/newresized/COCO_train2014_000000000659.jpg','./data/newresized/COCO_train2014_000000000034.jpg', './data/newresized/COCO_train2014_000000000801.jpg']
+    imagelist=['./data/resizedTrain2014/COCO_train2014_000000000659.jpg','./data/resizedTrain2014/COCO_train2014_000000000034.jpg', './data/resizedTrain2014/COCO_train2014_000000000801.jpg']
     for hh in imagelist:
         image = Image.open(hh)
         image_tensor = torch.Tensor(np.asarray(image)).view((1, 224, 224, 3)).to(device)
@@ -54,27 +53,30 @@ def sample(encoder, decoder, vocab):
                 break
         sentence = ' '.join(sampled_caption)
         # Print out the image and the generated caption
-        print(sentence)
+        # print(sentence)
         # image = Image.open(args.image)
         # plt.imshow(np.asarray(image))
         # plt.show()
 
 
 def main():
-    #prepare_data()
+    print('hh')
 
     f = open('./data/vocab.pkl', 'rb')
     vocab = pickle.load(f)
+    f.close()
+    f=open('./data/embed.pkl','rb')
+    embed=pickle.load(f)
     f.close()
     data_loader = get_loader(vocab=vocab, batch_size=5, shuffle=True)
 
     #Encoder
     encoder = EncoderNet(EMBED_SIZE).to(device)
-    vgg16 = models.vgg16(pretrained=True)
-    vgg16.cuda()
-    encoder.copy_params_from_vgg16(vgg16)
+    # vgg16 = models.vgg16(pretrained=True)
+    # vgg16.cuda()
+    # encoder.copy_params_from_vgg16(vgg16)
 
-    decoder = DecoderNet(embed_size=EMBED_SIZE, hidden_size=128, vocab_size=len(vocab.word_to_idx)).to(device)
+    decoder = DecoderNet(embed_size=EMBED_SIZE, hidden_size=128, embeddic=embed,vocab_size=len(vocab.word_to_idx)).to(device)
 
     if LOAD_FROM_CHECKPOINT:
         encoder.load_state_dict(torch.load(ENCODER_PATH))

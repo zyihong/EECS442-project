@@ -15,7 +15,7 @@ class Cocodataset(data.Dataset):
         self.coco = COCO(json)
         self.ids = list(self.coco.anns.keys())
         self.vocab = vocab
-        self.root = "./data/newresized"
+        self.root = "./data/resizedTrain2014"
 
     def __getitem__(self, index):
         coco = self.coco

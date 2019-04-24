@@ -79,7 +79,7 @@ class EncoderNet(nn.Module):
         resnet = models.resnet152(pretrained=True)
         modules = list(resnet.children())[:-1]
         self.resnet = nn.Sequential(*modules)
-        self.linear = nn.Linear(resnet.fc.in_features, embed_size)
+        self.fc = nn.Linear(resnet.fc.in_features, embed_size)
 
     def copy_params_from_vgg16(self, vgg16):
         encode_list = [self.encoder_fc_1_3, self.encoder_fc_4, self.encoder_fc_5]
@@ -98,7 +98,7 @@ class EncoderNet(nn.Module):
 
     def forward(self, x):
         ############### VGG16 version #################
-        # x = x.permute(0, 3, 1, 2)
+        x = x.permute(0, 3, 1, 2)
         # h = x
         # h = self.encoder_fc_1_3(h)
         # h = self.encoder_fc_4(h)
@@ -110,17 +110,18 @@ class EncoderNet(nn.Module):
         with torch.no_grad():
             h = self.resnet(x)
         h = h.reshape(h.size(0), -1)
-        h = self.linear(h)
+        # h = self.linear(h)
         h = self.fc(h)
         
         return h
 
 
 class DecoderNet(nn.Module):
-    def __init__(self, embed_size, hidden_size, vocab_size,  max_seq_length=20):
+    def __init__(self, embed_size, hidden_size, vocab_size,  embeddic,max_seq_length=20):
         super(DecoderNet, self).__init__()
 
         self.embed = nn.Embedding(vocab_size, embed_size)
+        self.embed.weight.data.copy_(torch.from_numpy(embeddic))
         self.lstm = nn.LSTM(embed_size, hidden_size, batch_first=True)
         self.linear = nn.Linear(hidden_size, vocab_size)
         self.max_seg_length = max_seq_length
