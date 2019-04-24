@@ -12,8 +12,8 @@ import matplotlib
 import cv2
 import matplotlib.pyplot as plt
 from PIL import Image
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device('cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cpu')
 
 
 SAVE_STEP = 2000
@@ -23,6 +23,7 @@ ENCODER_PATH = './models/encoder-4-82000.ckpt'
 DECODER_PATH = './models/decoder-4-82000.ckpt'
 LOAD_FROM_CHECKPOINT = False
 LEARNING_RATE = 5e-4
+
 
 def sentence(vocab,sampled_ids):
     captions=[]

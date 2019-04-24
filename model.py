@@ -10,98 +10,76 @@ class EncoderNet(nn.Module):
         # self.n_class = N_CLASS
         self.embed_size = embed_size
 
-        self.encoder_fc_1_3 = nn.Sequential(
-            #########################################
-            ###        TODO: Add more layers      ###
-            #########################################
-
-            # fc1 1/2 = 256/2 = 128 => N * 64 * 128 * 128
-            nn.Conv2d(3, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-
-            # fc2 1/4 = 128/2 = 64 => N * 128 * 64 * 64
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-
-            # fc3 1/8 = 64/2 = 32 => N * 256 * 32 * 32
-            nn.Conv2d(128, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(256, 256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
-        )
-
-        self.encoder_fc_4 = nn.Sequential(
-            # fc4 1/16 = 32/2 = 16 => N * 512 * 16 * 16
-            nn.Conv2d(256, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2)
-        )
-
-        self.encoder_fc_5 = nn.Sequential(
-            # fc5 1/32 = 16/2 = 8 => N * 512 * 8 * 8
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
-
-        self.encoder_fc_6_7 = nn.Sequential(
-            # fc6 N * 4096
-            nn.Linear(25088, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout2d(),
-
-            # fc7 1 * 1 conv => N * 4096
-            nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout2d()
-        )
-
-        self.fc = nn.Linear(4096, self.embed_size)
-        # self.bn=nn.BatchNorm1d(embed_size,momentum=0.01)
-
-        # fc8 skip connection
-        # self.score_fc7 = nn.Conv2d(4096, self.n_class, 1)
-        # self.score_pool3 = nn.Conv2d(256, self.n_class, 1)
-        # self.score_pool4 = nn.Conv2d(512, self.n_class, 1)
+        ############### VGG16 version #################
+        # self.encoder_fc_1_3 = nn.Sequential(
+        #     #########################################
+        #     ###        TODO: Add more layers      ###
+        #     #########################################
         #
-        # # fc9
-        # self.fc9 = nn.ConvTranspose2d(self.n_class, self.n_class, kernel_size=4, stride=2, bias=False)
+        #     # fc1 1/2 = 256/2 = 128 => N * 64 * 128 * 128
+        #     nn.Conv2d(3, 64, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(64, 64, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.MaxPool2d(kernel_size=2, stride=2),
         #
-        # # fc10
-        # self.fc10 = nn.ConvTranspose2d(self.n_class, self.n_class, kernel_size=4, stride=2, bias=False)
+        #     # fc2 1/4 = 128/2 = 64 => N * 128 * 64 * 64
+        #     nn.Conv2d(64, 128, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(128, 128, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.MaxPool2d(kernel_size=2, stride=2),
         #
-        # # fc11
-        # self.fc11 = nn.ConvTranspose2d(self.n_class, self.n_class, kernel_size=16, stride=8, bias=False)
+        #     # fc3 1/8 = 64/2 = 32 => N * 256 * 32 * 32
+        #     nn.Conv2d(128, 256, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(256, 256, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(256, 256, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.MaxPool2d(kernel_size=2, stride=2)
+        # )
+        #
+        # self.encoder_fc_4 = nn.Sequential(
+        #     # fc4 1/16 = 32/2 = 16 => N * 512 * 16 * 16
+        #     nn.Conv2d(256, 512, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.MaxPool2d(kernel_size=2, stride=2)
+        # )
+        #
+        # self.encoder_fc_5 = nn.Sequential(
+        #     # fc5 1/32 = 16/2 = 8 => N * 512 * 8 * 8
+        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.Conv2d(512, 512, kernel_size=3, padding=1),
+        #     nn.ReLU(inplace=True),
+        #     nn.MaxPool2d(kernel_size=2, stride=2),
+        # )
+        #
+        # self.encoder_fc_6_7 = nn.Sequential(
+        #     # fc6 N * 4096
+        #     nn.Linear(25088, 4096),
+        #     nn.ReLU(inplace=True),
+        #     nn.Dropout2d(),
+        #
+        #     # fc7 1 * 1 conv => N * 4096
+        #     nn.Linear(4096, 4096),
+        #     nn.ReLU(inplace=True),
+        #     nn.Dropout2d()
+        # )
+        # self.fc = nn.Linear(4096, self.embed_size)
 
-        # self._initialize_weights()
-
-    # def _initialize_weights(self):
-    #     for m in self.modules():
-    #         if isinstance(m, nn.Conv2d):
-    #             m.weight.data.zero_()
-    #             if m.bias is not None:
-    #                 m.bias.data.zero_()
-    #         if isinstance(m, nn.ConvTranspose2d):
-    #             assert m.kernel_size[0] == m.kernel_size[1]
-    #             initial_weight = get_upsampling_weight(m.in_channels, m.out_channels, m.kernel_size[0])
-    #             m.weight.data.copy_(initial_weight)
+        ############### ResNet version #################
+        resnet = models.resnet152(pretrained=True)
+        modules = list(resnet.children())[:-1]
+        self.resnet = nn.Sequential(*modules)
+        self.linear = nn.Linear(resnet.fc.in_features, embed_size)
 
     def copy_params_from_vgg16(self, vgg16):
         encode_list = [self.encoder_fc_1_3, self.encoder_fc_4, self.encoder_fc_5]
@@ -119,58 +97,22 @@ class EncoderNet(nn.Module):
             l2.bias.data = l1.bias.data.view(l2.bias.size())
 
     def forward(self, x):
-        # x = self.layers(x)
+        ############### VGG16 version #################
+        # x = x.permute(0, 3, 1, 2)
+        # h = x
+        # h = self.encoder_fc_1_3(h)
+        # h = self.encoder_fc_4(h)
+        # h = self.encoder_fc_5(h)
+        # h = h.view((h.shape[0], -1))
+        # h = self.encoder_fc_6_7(h)
 
-        x = x.permute(0, 3, 1, 2)
-        # print(x.shape)
-
-        # layer3
-        h = x
-        h = self.encoder_fc_1_3(h)
-        # pool3 = h
-
-        # print('hh', h.shape)
-
-        # layer4
-        h = self.encoder_fc_4(h)
-        # pool4 = h
-
-        # layer 5
-        h = self.encoder_fc_5(h)
-
-        # print('h', h.shape)
-
-        h = h.view((h.shape[0], -1))
-        # print(h.shape)
-
-        # encode finish
-        h = self.encoder_fc_6_7(h)
-
+        ############### ResNet version #################
+        with torch.no_grad():
+            h = self.resnet(x)
+        h = h.reshape(h.size(0), -1)
+        h = self.linear(h)
         h = self.fc(h)
-
-        # layer8, 9
-        # h = self.fc9(self.score_fc7(h))
-        # upsample_32 = h
-        #
-        # # layer8, 10
-        # h = self.score_pool4(pool4)
-        # h = h[:, :, 5:5 + upsample_32.size()[2], 5:5 + upsample_32.size()[3]]
-        # score_pool4 = h
-        #
-        # h = upsample_32 + score_pool4
-        # h = self.fc10(h)
-        # upsample_16 = h
-        #
-        # # layer8, 11
-        # h = self.score_pool3(pool3)
-        # h = h[:, :, 9:9 + upsample_16.size()[2], 9:9 + upsample_16.size()[3]]
-        # score_pool3 = h
-        #
-        # h = upsample_16 + score_pool3
-        # h = self.fc11(h)
-
-        # h = h[:, :, 28:28 + x.size()[2], 28:28 + x.size()[3]].contiguous()
-        # h=self.bn(h)
+        
         return h
 
 
