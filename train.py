@@ -20,7 +20,7 @@ MODEL_DIR = 'models/'
 EMBED_SIZE = 200
 ENCODER_PATH = './models/encoder-4-82000.ckpt'
 DECODER_PATH = './models/decoder-4-82000.ckpt'
-LOAD_FROM_CHECKPOINT = False
+LOAD_FROM_CHECKPOINT = True
 LEARNING_RATE = 5e-4
 
 
@@ -38,7 +38,7 @@ def sample(encoder, decoder, vocab):
     imagelist=['./data/resizedTrain2014/COCO_train2014_000000000659.jpg','./data/resizedTrain2014/COCO_train2014_000000000034.jpg', './data/resizedTrain2014/COCO_train2014_000000000801.jpg']
     for hh in imagelist:
         image = Image.open(hh)
-        image_tensor = torch.Tensor(np.asarray(image)).view((1, 224, 224, 3)).to(device)
+        image_tensor = torch.Tensor(np.asarray(image)).view((1, 256, 256, 3)).to(device)
         # Generate an caption from the image
         encoder.eval()
         feature = encoder(image_tensor)
@@ -53,7 +53,7 @@ def sample(encoder, decoder, vocab):
                 break
         sentence = ' '.join(sampled_caption)
         # Print out the image and the generated caption
-        # print(sentence)
+        print(sentence)
         # image = Image.open(args.image)
         # plt.imshow(np.asarray(image))
         # plt.show()
@@ -86,14 +86,14 @@ def main():
     params = list(decoder.parameters())+list(encoder.fc.parameters())
              # +list(encoder.bn.parameters())
     optimizer = torch.optim.Adam(params, lr=LEARNING_RATE)
-    for epoch in range(1):
+    for epoch in range(4,5):
         for i, (images, captions, lengths) in enumerate(tqdm(data_loader)):
             images = images.to(device)
             captions = captions.to(device)
-            sentence(vocab,captions[0].cpu().numpy())
-            plt.imshow(images[0].data.cpu().numpy()[:,:,::-1].astype('uint8'))
-            plt.show()
-            plt.savefig('temp.jpg')
+            # sentence(vocab,captions[0].cpu().numpy())
+            # plt.imshow(images[0].data.cpu().numpy()[:,:,::-1].astype('uint8'))
+            # plt.show()
+            # plt.savefig('temp.jpg')
             targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
             # sentence(vocab,targets.cpu().numpy())
             features = encoder(images)
