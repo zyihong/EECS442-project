@@ -1,4 +1,6 @@
 import numpy as np
+
+
 def gloveembedding():
     dict = {}
     embeddic = []
@@ -10,4 +12,4 @@ def gloveembedding():
         dict[word] = i
     embeddic = np.array(embeddic)
     print("Done.", len(dict), " words loaded!")
-    return embeddic, dict,
+    return embeddic, dict

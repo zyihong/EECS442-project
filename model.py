@@ -4,6 +4,7 @@ import torchvision.models as models
 from torch.nn.utils.rnn import pack_padded_sequence
 
 
+# encoder network: vgg16/ResNet
 class EncoderNet(nn.Module):
     def __init__(self, embed_size):
         super(EncoderNet, self).__init__()
@@ -12,9 +13,6 @@ class EncoderNet(nn.Module):
 
         ############### VGG16 version #################
         # self.encoder_fc_1_3 = nn.Sequential(
-        #     #########################################
-        #     ###        TODO: Add more layers      ###
-        #     #########################################
         #
         #     # fc1 1/2 = 256/2 = 128 => N * 64 * 128 * 128
         #     nn.Conv2d(3, 64, kernel_size=3, padding=1),
@@ -97,8 +95,8 @@ class EncoderNet(nn.Module):
             l2.bias.data = l1.bias.data.view(l2.bias.size())
 
     def forward(self, x):
-        ############### VGG16 version #################
         x = x.permute(0, 3, 1, 2)
+        ############### VGG16 version #################
         # h = x
         # h = self.encoder_fc_1_3(h)
         # h = self.encoder_fc_4(h)
@@ -110,14 +108,14 @@ class EncoderNet(nn.Module):
         with torch.no_grad():
             h = self.resnet(x)
         h = h.reshape(h.size(0), -1)
-        # h = self.linear(h)
         h = self.fc(h)
         
         return h
 
 
+# decoder network: word embedding + LSTM
 class DecoderNet(nn.Module):
-    def __init__(self, embed_size, hidden_size, vocab_size,  embeddic,max_seq_length=20):
+    def __init__(self, embed_size, hidden_size, vocab_size,  embeddic, max_seq_length=20):
         super(DecoderNet, self).__init__()
 
         self.embed = nn.Embedding.from_pretrained(torch.FloatTensor(embeddic),freeze=False)
@@ -128,12 +126,9 @@ class DecoderNet(nn.Module):
 
     def forward(self, features, captions, lengths):
         embeddings = self.embed(captions)
-        # print('embed1', embeddings.shape)
         embeddings = torch.cat((features.unsqueeze(1), embeddings), 1)
-        # print('embed2', embeddings.shape)
         packed = pack_padded_sequence(embeddings, lengths, batch_first=True)
         hiddens, _ = self.lstm(packed)  # packed)
-        # print(hiddens.shape)
         outputs = self.linear(hiddens[0])
         # outputs = outputs.permute(0, 2, 1)
         return outputs

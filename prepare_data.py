@@ -16,8 +16,8 @@ EMBED_PATH = './data/embed.pkl'
 THRESHOLD = 4
 
 IMAGE_DIR = './data/train2014'
-RESIZE_IMAGE_DIR = './data/newresized'
-IMAGE_SIZE = [224, 224]
+RESIZE_IMAGE_DIR = './data/resizedTrain2014'
+IMAGE_SIZE = [256, 256]
 
 
 class Vocabulary(object):
@@ -25,9 +25,7 @@ class Vocabulary(object):
         self.word_to_idx = {}
         self.idx_to_word = {}
         self.index = 0
-        # self.embed=embed
-        # self.dict=dict
-        self.own=[]
+        self.own = []
 
     def add_word(self, word):
         if word not in self.word_to_idx:
@@ -46,7 +44,8 @@ class Vocabulary(object):
         if word not in self.word_to_idx:
             return self.word_to_idx['<unk>']
         return self.word_to_idx[word]
-    def hh(self):
+
+    def get_array(self):
         return np.array(self.own)
 
 
@@ -56,7 +55,6 @@ def build_vocab(json_path, threshold):
     ids = coco_annotation.anns.keys()
     for i, id in enumerate(ids):
         caption = str(coco_annotation.anns[id]['caption'])
-        # TODO: please master Chao explain these two lines
         tokens = nltk.tokenize.word_tokenize(caption.lower())
         counter.update(tokens)
 
@@ -70,7 +68,7 @@ def build_vocab(json_path, threshold):
 
     for word in words:
         vocab.add_word(word)
-    return vocab,vocab.hh()
+    return vocab, vocab.get_array()
 
 
 def resize_image():
@@ -91,18 +89,16 @@ def resize_image():
 
 
 def prepare_data():
-    vocab,ownembed = build_vocab(CAPTION_PATH, THRESHOLD)
+    vocab, ownembed = build_vocab(CAPTION_PATH, THRESHOLD)
     with open(VOCAB_PATH, 'wb') as f:
         pickle.dump(vocab, f)
     print('Save word vocab to {}'.format(VOCAB_PATH))
-    with open(EMBED_PATH,'wb') as f:
-        pickle.dump(ownembed,f)
+    with open(EMBED_PATH, 'wb') as f:
+        pickle.dump(ownembed, f)
     print('Save word embed to {}'.format(EMBED_PATH))
 
 
-
-# resize_image()
-# embeddic, dict=gloveembedding()
-# prepare_data()
-
-
+if __name__ == '__main__':
+    resize_image()
+    embeddic, dict = gloveembedding()
+    prepare_data()

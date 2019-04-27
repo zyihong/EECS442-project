@@ -7,37 +7,38 @@ import pickle
 import numpy as np
 from tqdm import tqdm
 import matplotlib
-# matplotlib.use('tkagg')
 import cv2
 import matplotlib.pyplot as plt
 from PIL import Image
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# device = torch.device('cpu')
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 SAVE_STEP = 2000
 MODEL_DIR = 'models/'
 EMBED_SIZE = 200
+LEARNING_RATE = 5e-4
+EPOCH = 5
+
+# decide your checkpoint loader
 ENCODER_PATH = './models/encoder-4-82000.ckpt'
 DECODER_PATH = './models/decoder-4-82000.ckpt'
-LOAD_FROM_CHECKPOINT = True
-LEARNING_RATE = 5e-4
+LOAD_FROM_CHECKPOINT = False
 
 
-def sentence(vocab,sampled_ids):
-    captions=[]
+# simple test help func
+def sentence(vocab, sampled_ids):
+    captions = []
     for word_id in sampled_ids:
         word = vocab.idx_to_word[word_id]
         captions.append(word)
-        # if word == '<end>':
-        #     break
     print(captions)
 
 
+# a simple test
 def sample(encoder, decoder, vocab):
-    imagelist=['./data/resizedTrain2014/COCO_train2014_000000000659.jpg','./data/resizedTrain2014/COCO_train2014_000000000034.jpg', './data/resizedTrain2014/COCO_train2014_000000000801.jpg']
-    for hh in imagelist:
-        image = Image.open(hh)
+    imagelist = ['./data/resizedTrain2014/COCO_train2014_000000000659.jpg', './data/resizedTrain2014/COCO_train2014_000000000034.jpg', './data/resizedTrain2014/COCO_train2014_000000000801.jpg']
+    for img in imagelist:
+        image = Image.open(img)
         image_tensor = torch.Tensor(np.asarray(image)).view((1, 256, 256, 3)).to(device)
         # Generate an caption from the image
         encoder.eval()
@@ -54,59 +55,57 @@ def sample(encoder, decoder, vocab):
         sentence = ' '.join(sampled_caption)
         # Print out the image and the generated caption
         print(sentence)
-        # image = Image.open(args.image)
-        # plt.imshow(np.asarray(image))
-        # plt.show()
 
 
 def main():
-    print('hh')
-
+    # load data
     f = open('./data/vocab.pkl', 'rb')
     vocab = pickle.load(f)
     f.close()
-    f=open('./data/embed.pkl','rb')
-    embed=pickle.load(f)
+    f = open('./data/embed.pkl','rb')
+    embed = pickle.load(f)
     f.close()
     data_loader = get_loader(vocab=vocab, batch_size=5, shuffle=True)
+    total_length = len(data_loader)
 
-    #Encoder
+    # Encoder
     encoder = EncoderNet(EMBED_SIZE).to(device)
     # vgg16 = models.vgg16(pretrained=True)
     # vgg16.cuda()
     # encoder.copy_params_from_vgg16(vgg16)
 
-    decoder = DecoderNet(embed_size=EMBED_SIZE, hidden_size=128, embeddic=embed,vocab_size=len(vocab.word_to_idx)).to(device)
+    # Decoder
+    decoder = DecoderNet(embed_size=EMBED_SIZE, hidden_size=128, embeddic=embed, vocab_size=len(vocab.word_to_idx)).to(device)
 
     if LOAD_FROM_CHECKPOINT:
         encoder.load_state_dict(torch.load(ENCODER_PATH))
         decoder.load_state_dict(torch.load(DECODER_PATH))
 
+    # decide loss function and optimizer
     criterion = nn.CrossEntropyLoss()
     params = list(decoder.parameters())+list(encoder.fc.parameters())
-             # +list(encoder.bn.parameters())
     optimizer = torch.optim.Adam(params, lr=LEARNING_RATE)
-    for epoch in range(4,5):
+
+    # start training
+    for epoch in range(EPOCH):
         for i, (images, captions, lengths) in enumerate(tqdm(data_loader)):
             images = images.to(device)
             captions = captions.to(device)
-            # sentence(vocab,captions[0].cpu().numpy())
-            # plt.imshow(images[0].data.cpu().numpy()[:,:,::-1].astype('uint8'))
-            # plt.show()
-            # plt.savefig('temp.jpg')
+
             targets = pack_padded_sequence(captions, lengths, batch_first=True)[0]
-            # sentence(vocab,targets.cpu().numpy())
+
             features = encoder(images)
             outputs = decoder(features, captions, lengths)
-            # print('output', outputs.shape)
-            # print('caption', captions.shape)
+
             loss = criterion(outputs, targets)
             encoder.zero_grad()
             decoder.zero_grad()
+
             loss.backward()
             optimizer.step()
+
             if i % 50 == 0:
-                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch, 10, i, 10, loss.item(), np.exp(loss.item())))
+                print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch + 1, EPOCH, i+1, total_length, loss.item(), np.exp(loss.item())))
             if i % 100 == 0 and i != 0:
                 sample(encoder, decoder, vocab)
 
