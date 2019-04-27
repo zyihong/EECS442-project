@@ -12,6 +12,7 @@ import matplotlib
 # matplotlib.use('tkagg')
 import cv2
 import matplotlib.pyplot as plt
+import nltk
 
 SAVE_STEP = 500
 MODEL_DIR = 'models/'
@@ -33,6 +34,7 @@ f.close()
 f=open('./data/embed.pkl','rb')
 embed=pickle.load(f)
 f.close()
+data_loader = get_loader(vocab=vocab, batch_size=5, shuffle=True)
 decoder = DecoderNet(embed_size=EMBED_SIZE, hidden_size=128, embeddic=embed, vocab_size=len(vocab.word_to_idx)).to(device)
 
 if LOAD_FROM_CHECKPOINT:
@@ -42,26 +44,44 @@ if LOAD_FROM_CHECKPOINT:
 
 root='./data/resizedTrain2014/'
 files=os.listdir(root)
-for i in range(1000):
-    print (i)
-    image = cv2.cvtColor(cv2.imread(os.path.join(root,files[i])),cv2.COLOR_BGR2RGB)
-    image_tensor = torch.Tensor(image).view((1, 256, 256, 3)).to(device)
-    # Generate an caption from the image
-    feature = encoder(image_tensor)
-    sampled_ids = decoder.predict(feature)
-    sampled_ids = sampled_ids[0].cpu().numpy()  # (1, max_seq_length) -> (max_seq_length)
-    # Convert word_ids to words
+# for i in range(1000):
+#     print (i)
+#     image = cv2.cvtColor(cv2.imread(os.path.join(root,files[i])),cv2.COLOR_BGR2RGB)
+#     image_tensor = torch.Tensor(image).view((1, 256, 256, 3)).to(device)
+#     # Generate an caption from the image
+#     feature = encoder(image_tensor)
+#     sampled_ids = decoder.predict(feature)
+#     sampled_ids = sampled_ids[0].cpu().numpy()  # (1, max_seq_length) -> (max_seq_length)
+#     # Convert word_ids to words
+#     sampled_caption = []
+#     for word_id in sampled_ids:
+#         word = vocab.idx_to_word[word_id]
+#         sampled_caption.append(word)
+#         if word == '<end>':
+#             break
+#     sentence = ' '.join(sampled_caption)
+#     # Print out the image and the generated caption
+#     # image = Image.open(args.image)
+#     plt.imshow(image_tensor[0].data.cpu().numpy().astype('uint8'))
+#     plt.title(sentence)
+#     plt.savefig("./results2/img{}.png".format(i))
+#     # plt.show()
+
+def getsentence(sampled_ids):
     sampled_caption = []
     for word_id in sampled_ids:
         word = vocab.idx_to_word[word_id]
         sampled_caption.append(word)
         if word == '<end>':
             break
-    sentence = ' '.join(sampled_caption)
-    # Print out the image and the generated caption
-    # image = Image.open(args.image)
-    plt.imshow(image_tensor[0].data.cpu().numpy().astype('uint8'))
-    plt.title(sentence)
-    plt.savefig("./results2/img{}.png".format(i))
-    # plt.show()
+    return sampled_caption
 
+bleu=0
+for i, (images, captions, lengths) in enumerate(tqdm(data_loader)):
+    images = images.to(device)
+    captions = captions.data.cpu().numpy()
+    feature = encoder(images)
+    sampled_ids = decoder.predict(feature).data.cpu().numpy()
+    for ii in range(len(sampled_ids)):
+        getsentence(captions[ii]),getsentence(sampled_ids[ii])
+print(bleu/data_loader.__len__())
